@@ -305,26 +305,56 @@
       <div class="chat-header">
         <div class="chat-header-info">
           <h4>Don Barbone Concierge</h4>
-          <span><i class="fa-solid fa-circle"></i> Online</span>
+          <span id="chatStatusText"><i class="fa-solid fa-circle"></i> Online</span>
         </div>
-        <button class="chat-close" onclick="toggleChatbot()" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+        <div class="chat-header-actions">
+          <button class="chat-action-btn" id="chatSettingsBtn" onclick="toggleChatSettings()" title="Configurações de IA (Hugging Face)"><i class="fa-solid fa-gear"></i></button>
+          <button class="chat-action-btn" id="chatClearBtn" onclick="clearChatHistory()" title="Limpar Conversa"><i class="fa-solid fa-rotate-left"></i></button>
+          <button class="chat-close" onclick="toggleChatbot()" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </div>
+
+      <!-- PAINEL DE CONFIGURAÇÃO HUGGING FACE -->
+      <div class="chat-settings-panel" id="chatSettingsPanel" style="display: none;">
+        <div class="settings-title-row">
+          <h5><i class="fa-solid fa-brain"></i> Inteligência Artificial (HF)</h5>
+          <button class="settings-close-btn" onclick="toggleChatSettings()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <p>Conecte seu token gratuito do Hugging Face para ativar respostas dinâmicas com LLM:</p>
+        <div class="chat-settings-input-group">
+          <input type="password" id="hfTokenInput" placeholder="Cole seu token: hf_..." autocomplete="off">
+          <button type="button" id="saveHfTokenBtn" onclick="saveHfSettings()">Salvar</button>
+        </div>
+        <div class="chat-model-select">
+          <label for="hfModelSelect">Modelo:</label>
+          <select id="hfModelSelect" onchange="saveHfSettings()">
+            <option value="Qwen/Qwen2.5-7B-Instruct">Qwen 2.5 7B (Excelente em PT-BR)</option>
+            <option value="meta-llama/Llama-3.2-3B-Instruct">Llama 3.2 3B (Ultrarrápido)</option>
+            <option value="mistralai/Mistral-7B-Instruct-v0.3">Mistral 7B Instruct</option>
+          </select>
+        </div>
+        <div class="settings-footer-info">
+          <small><i class="fa-solid fa-shield-halved"></i> Salvo apenas no seu navegador (localStorage).</small>
+          <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">Gerar Token Grátis</a>
+        </div>
       </div>
 
       <div class="chat-body" id="chatMessages">
         <div class="chat-bubble bot">
           Saudações, cavalheiro! 💈 Bem-vindo à <strong>Don Barbone</strong>.<br><br>
-          Como nossa equipe pode lhe ajudar hoje?
+          Sou seu Concierge virtual. Como posso lhe auxiliar hoje?
         </div>
         <div class="chat-quick-actions" id="quickActions">
           <button class="chat-btn" onclick="chatSelectOption('agendar')">Agendar Horário</button>
-          <button class="chat-btn" onclick="chatSelectOption('precos')">Ver Serviços</button>
+          <button class="chat-btn" onclick="chatSelectOption('precos')">Serviços & Preços</button>
           <button class="chat-btn" onclick="chatSelectOption('horarios')">Horários & Local</button>
+          <button class="chat-btn" onclick="chatSelectOption('bar')">Bar & Chopp</button>
         </div>
       </div>
 
       <div class="chat-footer">
-        <input type="text" class="chat-input" id="chatUserInput" placeholder="Digite sua mensagem..." onkeypress="handleChatKey(event)">
-        <button class="chat-send" onclick="sendUserMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+        <input type="text" class="chat-input" id="chatUserInput" placeholder="Digite sua mensagem ou dúvida..." onkeypress="handleChatKey(event)">
+        <button class="chat-send" id="chatSendBtn" onclick="sendUserMessage()" aria-label="Enviar"><i class="fa-solid fa-paper-plane"></i></button>
       </div>
     </div>
   </div>
