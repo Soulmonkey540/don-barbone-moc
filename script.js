@@ -112,10 +112,10 @@ function toggleChatSettings() {
 function saveHfSettings() {
   const token = hfTokenInput.value.trim();
   const model = hfModelSelect.value;
-  
+
   hfToken = token;
   hfModel = model;
-  
+
   if (token) {
     localStorage.setItem('don_barbone_hf_token', token);
   } else {
@@ -126,8 +126,8 @@ function saveHfSettings() {
   updateChatStatus();
   toggleChatSettings();
 
-  const msg = token 
-    ? '✨ <strong>IA Hugging Face ativada com sucesso!</strong> Agora você está conversando em tempo real com o modelo <em>' + model.split('/')[1] + '</em>.' 
+  const msg = token
+    ? '✨ <strong>IA Hugging Face ativada com sucesso!</strong> Agora você está conversando em tempo real com o modelo <em>' + model.split('/')[1] + '</em>.'
     : 'ℹ️ Token removido. O Concierge retornou ao modo inteligente local.';
   addMessage('bot', msg);
 }
@@ -436,7 +436,7 @@ async function sendUserMessage() {
 
       // Aviso suave e fallback para o concierge local
       addMessage('bot', `<small style="color:var(--accent-hover); display:block; margin-bottom:6px;"><i class="fa-solid fa-triangle-exclamation"></i> Resposta via Concierge Local (HF retornou: ${err.message})</small>`);
-      
+
       const localResp = getLocalConciergeResponse(text);
       addMessage('bot', localResp.text);
       if (localResp.button) {
