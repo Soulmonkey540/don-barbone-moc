@@ -127,22 +127,22 @@ function saveHfSettings() {
   toggleChatSettings();
 
   const msg = token
-    ? '✨ <strong>IA Hugging Face ativada com sucesso!</strong> Agora você está conversando em tempo real com o modelo <em>' + model.split('/')[1] + '</em>.'
-    : 'ℹ️ Token removido. O Concierge retornou ao modo inteligente local.';
+    ? '✨ <strong>Token pessoal configurado!</strong> O Concierge usará seu token com o modelo <em>' + model.split('/')[1] + '</em>.'
+    : '✨ <strong>Configurações salvas!</strong> O Concierge está operando com a IA global da Don Barbone e modelo <em>' + model.split('/')[1] + '</em>.';
   addMessage('bot', msg);
 }
 
 // Atualiza status no cabeçalho
 function updateChatStatus() {
   if (!chatStatusText) return;
+  chatStatusText.className = 'ai-active';
   if (hfToken) {
-    chatStatusText.className = 'ai-active';
-    chatStatusText.innerHTML = '<i class="fa-solid fa-brain"></i> IA Hugging Face';
+    chatStatusText.innerHTML = '<i class="fa-solid fa-brain"></i> IA Hugging Face (Custom)';
   } else {
-    chatStatusText.className = '';
-    chatStatusText.innerHTML = '<i class="fa-solid fa-circle"></i> Concierge Online';
+    chatStatusText.innerHTML = '<i class="fa-solid fa-brain"></i> IA Don Barbone';
   }
 }
+
 
 // Limpa histórico
 function clearChatHistory() {
@@ -356,9 +356,8 @@ function getLocalConciergeResponse(userText) {
   };
 }
 
-// Chamada à API da Hugging Face via Router (compatível com CORS)
+// Chamada à API da IA via Serverless Function da Vercel (/api/chat) ou direto se local (file://)
 async function callHuggingFaceAPI(userMessage) {
-  const token = hfToken.trim();
   const model = hfModel || 'Qwen/Qwen2.5-7B-Instruct';
 
   // Monta histórico de mensagens para dar contexto
@@ -368,17 +367,50 @@ async function callHuggingFaceAPI(userMessage) {
     { role: 'user', content: userMessage }
   ];
 
-  const response = await fetch('https://router.huggingface.co/hf-inference/v1/chat/completions', {
+  // Caso 1: Teste local direto via file:// com token salvo no navegador
+  if (window.location.protocol === 'file:' && hfToken) {
+    const response = await fetch('https://router.huggingface.co/hf-inference/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${hfToken.trim()}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: messages,
+        max_tokens: 300,
+        temperature: 0.7
+      })
+    });
+
+    if (!response.ok) {
+      const errorDetails = await response.json().catch(() => ({}));
+      const errorMsg = errorDetails.error?.message || errorDetails.message || `Status HTTP ${response.status}`;
+      throw new Error(errorMsg);
+    }
+
+    const data = await response.json();
+    const replyContent = data.choices && data.choices[0] && data.choices[0].message
+      ? data.choices[0].message.content
+      : null;
+
+    if (!replyContent) throw new Error('Resposta vazia da API Hugging Face.');
+    return replyContent.trim();
+  }
+
+  // Caso 2: Em produção na Vercel (ou servidor web)
+  // Faz a requisição segura para a Serverless Function /api/chat
+  const headers = { 'Content-Type': 'application/json' };
+  if (hfToken) {
+    headers['Authorization'] = `Bearer ${hfToken.trim()}`;
+  }
+
+  const response = await fetch('/api/chat', {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
+    headers: headers,
     body: JSON.stringify({
       model: model,
-      messages: messages,
-      max_tokens: 300,
-      temperature: 0.7
+      messages: messages
     })
   });
 
@@ -394,7 +426,7 @@ async function callHuggingFaceAPI(userMessage) {
     : null;
 
   if (!replyContent) {
-    throw new Error('Resposta vazia da API Hugging Face.');
+    throw new Error('Resposta vazia da IA.');
   }
 
   return replyContent.trim();
@@ -419,40 +451,26 @@ async function sendUserMessage() {
   chatSendBtn.disabled = true;
   showTypingIndicator();
 
-  // Se houver Hugging Face Token configurado, consulta a IA
-  if (hfToken) {
-    try {
-      const aiReply = await callHuggingFaceAPI(text);
-      hideTypingIndicator();
+  // Consulta a IA via Serverless Function
+  try {
+    const aiReply = await callHuggingFaceAPI(text);
+    hideTypingIndicator();
 
-      // Atualiza histórico
-      conversationHistory.push({ role: 'user', content: text });
-      conversationHistory.push({ role: 'assistant', content: aiReply });
+    // Atualiza histórico
+    conversationHistory.push({ role: 'user', content: text });
+    conversationHistory.push({ role: 'assistant', content: aiReply });
 
-      addMessage('bot', formatMarkdown(aiReply));
-    } catch (err) {
-      console.warn('Erro ao consultar Hugging Face:', err);
-      hideTypingIndicator();
+    addMessage('bot', formatMarkdown(aiReply));
+  } catch (err) {
+    console.warn('IA indisponível, acionando Concierge Local:', err);
+    hideTypingIndicator();
 
-      // Aviso suave e fallback para o concierge local
-      addMessage('bot', `<small style="color:var(--accent-hover); display:block; margin-bottom:6px;"><i class="fa-solid fa-triangle-exclamation"></i> Resposta via Concierge Local (HF retornou: ${err.message})</small>`);
-
-      const localResp = getLocalConciergeResponse(text);
-      addMessage('bot', localResp.text);
-      if (localResp.button) {
-        addMessage('bot', `<a href="${localResp.button.url}" target="_blank" class="chat-btn" style="margin-top:4px;">${localResp.button.label}</a>`);
-      }
+    // Fallback amigável para o Concierge Local caso a API da Vercel ou HF falhe
+    const localResp = getLocalConciergeResponse(text);
+    addMessage('bot', localResp.text);
+    if (localResp.button) {
+      addMessage('bot', `<a href="${localResp.button.url}" target="_blank" class="chat-btn" style="margin-top:4px;">${localResp.button.label}</a>`);
     }
-  } else {
-    // Sem token: responde com o Concierge Local inteligente
-    setTimeout(() => {
-      hideTypingIndicator();
-      const localResp = getLocalConciergeResponse(text);
-      addMessage('bot', localResp.text);
-      if (localResp.button) {
-        addMessage('bot', `<a href="${localResp.button.url}" target="_blank" class="chat-btn" style="margin-top:4px;">${localResp.button.label}</a>`);
-      }
-    }, 550);
   }
 
   // Reabilita inputs

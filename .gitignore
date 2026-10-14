@@ -1,0 +1,10 @@
+# Ambientes locais e credenciais
+.env
+.env.local
+.env.*.local
+
+# Vercel
+.vercel
+
+# Node (caso use pacotes futuros)
+node_modules/

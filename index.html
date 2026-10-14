@@ -356,9 +356,9 @@
           <h5><i class="fa-solid fa-brain"></i> Inteligência Artificial (HF)</h5>
           <button class="settings-close-btn" onclick="toggleChatSettings()"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <p>Conecte seu token gratuito do Hugging Face para ativar respostas dinâmicas com LLM:</p>
+        <p>A IA global já opera conectada via servidor. Caso deseje personalizar, você pode alterar o modelo ou usar seu próprio token:</p>
         <div class="chat-settings-input-group">
-          <input type="password" id="hfTokenInput" placeholder="Cole seu token: hf_..." autocomplete="off">
+          <input type="password" id="hfTokenInput" placeholder="Token pessoal opcional: hf_..." autocomplete="off">
           <button type="button" id="saveHfTokenBtn" onclick="saveHfSettings()">Salvar</button>
         </div>
         <div class="chat-model-select">
@@ -370,7 +370,7 @@
           </select>
         </div>
         <div class="settings-footer-info">
-          <small><i class="fa-solid fa-shield-halved"></i> Salvo apenas no seu navegador (localStorage).</small>
+          <small><i class="fa-solid fa-shield-halved"></i> Token do servidor protegido na Vercel.</small>
           <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">Gerar Token Grátis</a>
         </div>
       </div>
